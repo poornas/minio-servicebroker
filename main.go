@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
-	"github.com/urfave/negroni"
-
+	"code.cloudfoundry.org/lager"
 	"github.com/go-zoo/bone"
+	"github.com/urfave/negroni"
 )
 
 func main() {
+
+	log := lager.NewLogger("minio-servicebroker")
+	log.RegisterSink(lager.NewWriterSink(os.Stderr, lager.DEBUG))
+	log.RegisterSink(lager.NewWriterSink(os.Stderr, lager.INFO))
+
 	mux := bone.New()
 
 	// Handle take http.Handler
