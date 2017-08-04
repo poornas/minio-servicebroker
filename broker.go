@@ -1,19 +1,53 @@
 package main
 
 import (
+	"fmt"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/pivotal-cf/brokerapi"
+	"github.com/satori/go.uuid"
 )
 
 // MinioServiceBroker
 type MinioServiceBroker struct {
 	log lager.Logger
+	// Serviceplan Info
+	serviceName        string
+	serviceID          string
+	serviceDescription string
+	serviceTags        []string
+	bindableService    bool
+
+	// plan-specific customization
+	planName        string
+	planDescription string
+	planID          string
+	bindablePlan    bool
 }
 
-// Services Api
-func (b *MinioServiceBroker) Services() []brokerapi.Service {
+// Catalog Api
+func (b *MinioServiceBroker) Catalog() []brokerapi.Service {
 	b.log.Info("Building services catalog...")
-	return nil
+	brokerID := uuid.NewV4().String()
+
+	return []brokerapi.Service{
+		brokerapi.Service{
+			ID:            brokerID,
+			Name:          b.serviceName,
+			Description:   b.serviceDescription,
+			Tags:          []string{},
+			Bindable:      b.bindableService,
+			PlanUpdatable: b.bindablePlan,
+			Plans: []brokerapi.ServicePlan{
+				brokerapi.ServicePlan{
+					ID:          fmt.Sprintf("%s.%s", brokerID, b.planName),
+					Name:        b.planName,
+					Description: b.planDescription,
+					Free:        brokerapi.FreeValue(true),
+				},
+			},
+		},
+	}
 }
 
 //Provision ...
