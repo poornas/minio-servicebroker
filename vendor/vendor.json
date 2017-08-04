@@ -1,0 +1,37 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "xkL8isAttknQuBcxjLZ3m+JQJns=",
+			"path": "code.cloudfoundry.org/lager",
+			"revision": "438ab98cc3b9b81e97c2281422b2722cd8e80ed8",
+			"revisionTime": "2017-06-29T16:29:18Z"
+		},
+		{
+			"checksumSHA1": "PRvpYKIbLXck63L+ghL8JiBIDdA=",
+			"path": "github.com/go-zoo/bone",
+			"revision": "031b4005dfe248ccba241a0c9de0f9e112fd6b7c",
+			"revisionTime": "2017-07-11T14:09:42Z"
+		},
+		{
+			"checksumSHA1": "oRXCH85iG3O62zdSjg5jVcQqZUc=",
+			"path": "github.com/pivotal-cf/brokerapi",
+			"revision": "6d25b9398d9f05880ca8f480134a88c8d2df69bc",
+			"revisionTime": "2017-05-23T13:36:50Z"
+		},
+		{
+			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "5bf94b69c6b68ee1b541973bb8e1144db23a194b",
+			"revisionTime": "2017-03-21T23:07:31Z"
+		},
+		{
+			"checksumSHA1": "GtGbyysLRYLXuY2vL0mUYeN6jL4=",
+			"path": "github.com/urfave/negroni",
+			"revision": "3444e69ea1ef03a77998d11fc56e7f0a34f7213c",
+			"revisionTime": "2017-08-01T19:23:17Z"
+		}
+	],
+	"rootPath": "github.com/minio/minio-servicebroker"
+}
