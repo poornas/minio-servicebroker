@@ -19,6 +19,11 @@ func main() {
 	c := Controller{log: log}
 	// Handle take http.Handler
 	mux.Get("/v2/catalog", http.HandlerFunc(c.CatalogHandler))
+	mux.Put("/v2/service_instances/{service_instance_guid}", http.HandlerFunc(c.ProvisionHandler))
+	mux.Delete("/v2/service_instances/{service_instance_guid}", http.HandlerFunc(c.DeprovisionHandler))
+	mux.Put("/v2/service_instances/{service_instance_guid}/service_bindings/{service_binding_guid}", http.HandlerFunc(c.BindHandler))
+	mux.Delete("/v2/service_instances/{service_instance_guid}/service_bindings/{service_binding_guid}", http.HandlerFunc(c.UnBindHandler))
+
 	n := negroni.Classic()
 	n.UseHandler(mux)
 	n.Run(":8080")
