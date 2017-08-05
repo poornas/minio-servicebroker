@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/go-zoo/bone"
-	"github.com/urfave/negroni"
+	"github.com/pivotal-cf/brokerapi"
 )
 
 const (
@@ -32,6 +32,20 @@ func main() {
 	log.RegisterSink(lager.NewWriterSink(os.Stderr, lager.DEBUG))
 	log.RegisterSink(lager.NewWriterSink(os.Stderr, lager.INFO))
 
+	// Ensure username and password are present
+	username := os.Getenv("USER_NAME")
+	if username == "" {
+		log.Fatal("missing USER_NAME", nil)
+	}
+	password := os.Getenv("USER_PASSWORD")
+	if password == "" {
+		log.Fatal("missing USER_PASSWORD", nil)
+	}
+	credentials := brokerapi.BrokerCredentials{
+		Username: username,
+		Password: password,
+	}
+
 	// Setup the broker
 	broker := &MinioServiceBroker{
 		log:                log,
@@ -43,21 +57,13 @@ func main() {
 		planDescription:    DefaultPlanDescription,
 		bindablePlan:       true,
 	}
-	c := Controller{
-		log:    log,
-		broker: broker,
+
+	brokerAPI := brokerapi.New(broker, log, credentials)
+	http.Handle("/", brokerAPI)
+	log.Info("Listening for requests")
+	err := http.ListenAndServe(fmt.Sprintf(":%d", 8080), nil)
+	if err != nil {
+		log.Error("Failed to start the server", err)
 	}
-	// Setup routers
-	mux := bone.New()
 
-	// Handle take http.Handler
-	mux.Get("/v2/catalog", http.HandlerFunc(c.CatalogHandler))
-	mux.Put("/v2/service_instances/{service_instance_guid}", http.HandlerFunc(c.ProvisionHandler))
-	mux.Delete("/v2/service_instances/{service_instance_guid}", http.HandlerFunc(c.DeprovisionHandler))
-	mux.Put("/v2/service_instances/{service_instance_guid}/service_bindings/{service_binding_guid}", http.HandlerFunc(c.BindHandler))
-	mux.Delete("/v2/service_instances/{service_instance_guid}/service_bindings/{service_binding_guid}", http.HandlerFunc(c.UnBindHandler))
-
-	n := negroni.Classic()
-	n.UseHandler(mux)
-	n.Run(":8080")
 }

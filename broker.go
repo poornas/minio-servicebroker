@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"code.cloudfoundry.org/lager"
@@ -8,7 +9,30 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// MinioServiceBroker
+type Credentials struct {
+	Endpoint  string
+	Port      string
+	AccessKey string
+	SecretKey string
+	Secure    bool
+}
+
+type BrokerConfig struct {
+	Password string
+	Username string
+}
+type InstanceCreator interface {
+	Create(instanceID string) error
+	Destroy(instanceID string) error
+	Exists(instanceID string) (bool, error)
+}
+
+type InstanceBinder interface {
+	Bind(instanceID string, bindingID string) (Credentials, error)
+	Unbind(instanceID string, bindingID string) error
+}
+
+// Broker
 type MinioServiceBroker struct {
 	log lager.Logger
 	// Serviceplan Info
@@ -19,14 +43,19 @@ type MinioServiceBroker struct {
 	bindableService    bool
 
 	// plan-specific customization
-	planName        string
-	planDescription string
-	planID          string
-	bindablePlan    bool
+	planName         string
+	planDescription  string
+	planID           string
+	bindablePlan     bool
+	InstanceCreators map[string]InstanceCreator
+	InstanceBinders  map[string]InstanceBinder
+
+	// Broker Config
+	Config BrokerConfig
 }
 
-// Catalog Api
-func (b *MinioServiceBroker) Catalog() []brokerapi.Service {
+// Services Api
+func (b *MinioServiceBroker) Services(ctx context.Context) []brokerapi.Service {
 	b.log.Info("Building services catalog...")
 	brokerID := uuid.NewV4().String()
 
@@ -51,19 +80,20 @@ func (b *MinioServiceBroker) Catalog() []brokerapi.Service {
 }
 
 //Provision ...
-func (b *MinioServiceBroker) Provision(instanceID string, serviceDetails brokerapi.ProvisionDetails, asyncAllowed bool) (spec brokerapi.ProvisionedServiceSpec, err error) {
+func (b *MinioServiceBroker) Provision(ctx context.Context, instanceID string, serviceDetails brokerapi.ProvisionDetails, asyncAllowed bool) (spec brokerapi.ProvisionedServiceSpec, err error) {
 	b.log.Info("Provisioning new instance ...")
 	return brokerapi.ProvisionedServiceSpec{}, nil
 }
 
 // Deprovision Api
-func (b *MinioServiceBroker) Deprovision(instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
+func (b *MinioServiceBroker) Deprovision(ctx context.Context, instanceID string, details brokerapi.DeprovisionDetails, asyncAllowed bool) (brokerapi.DeprovisionServiceSpec, error) {
 	b.log.Info("Deprovisioning new instance...")
 	return brokerapi.DeprovisionServiceSpec{}, nil
 }
 
 // Bind Api
-func (b *MinioServiceBroker) Bind(instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
+func (b *MinioServiceBroker) Bind(ctx context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
+
 	b.log.Debug("Binding service...", lager.Data{
 		"binding-id":  bindingID,
 		"instance-id": instanceID,
@@ -72,7 +102,7 @@ func (b *MinioServiceBroker) Bind(instanceID, bindingID string, details brokerap
 }
 
 // Unbind Api
-func (b *MinioServiceBroker) Unbind(instanceID, bindingID string, details brokerapi.UnbindDetails) error {
+func (b *MinioServiceBroker) Unbind(ctx context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
 	b.log.Info("Unbinding service...", lager.Data{
 		"binding-id":  bindingID,
 		"instance-id": instanceID,
@@ -81,7 +111,7 @@ func (b *MinioServiceBroker) Unbind(instanceID, bindingID string, details broker
 }
 
 // LastOperation ...
-func (b *MinioServiceBroker) LastOperation(instanceID, operationData string) (brokerapi.LastOperation, error) {
+func (b *MinioServiceBroker) LastOperation(ctx context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
 	b.log.Info("Last operation", lager.Data{
 		"instance-id": instanceID,
 	})
@@ -89,7 +119,7 @@ func (b *MinioServiceBroker) LastOperation(instanceID, operationData string) (br
 }
 
 // Update implements brokerapi.ServiceBroker
-func (b *MinioServiceBroker) Update(instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
+func (b *MinioServiceBroker) Update(ctx context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
 	b.log.Debug("Updating service...", lager.Data{
 		"instance-id": instanceID,
 	})
