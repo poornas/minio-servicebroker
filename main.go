@@ -6,8 +6,7 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/minio/minio-servicebroker/cmd/instancebinders"
-	"github.com/minio/minio-servicebroker/cmd/instancecreators"
+
 	"github.com/minio/minio-servicebroker/utils"
 	"github.com/pivotal-cf/brokerapi"
 )
@@ -21,7 +20,8 @@ const (
 
 	// DefaultPlanName is the name of our supported plan
 	DefaultPlanName = "default"
-
+	// DefaultPlanID is the ID of our supported plan
+	DefaultPlanID = "1234"
 	//DefaultPlanDescription describes the default plan offered.
 	DefaultPlanDescription = "Secure access to a single instance Minio server"
 
@@ -70,10 +70,11 @@ func main() {
 		serviceDescription: DefaultServiceDescription,
 		bindableService:    true,
 		planName:           DefaultPlanName,
+		planID:             DefaultPlanID,
 		planDescription:    DefaultPlanDescription,
 		bindablePlan:       true,
-		instanceBinders:    instancebinders.New(conf, log),
-		instanceCreators:   instancecreators.New(conf, log),
+		binderMgr:          NewBinderMgr(conf, log),
+		instanceMgr:        NewInstanceMgr(conf, log),
 	}
 
 	brokerAPI := brokerapi.New(broker, log, credentials)

@@ -2,6 +2,7 @@ package brokerapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -81,7 +82,10 @@ func (h serviceBrokerHandler) provision(w http.ResponseWriter, req *http.Request
 	})
 
 	var details ProvisionDetails
+
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
+		fmt.Println(err)
+
 		logger.Error(invalidServiceDetailsErrorKey, err)
 		h.respond(w, http.StatusUnprocessableEntity, ErrorResponse{
 			Description: err.Error(),
