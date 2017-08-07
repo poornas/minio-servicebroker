@@ -47,8 +47,8 @@ type MinioServiceBroker struct {
 	planDescription  string
 	planID           string
 	bindablePlan     bool
-	InstanceCreators map[string]InstanceCreator
-	InstanceBinders  map[string]InstanceBinder
+	instanceCreators InstanceCreator
+	instanceBinders  InstanceBinder
 
 	// Broker Config
 	Config BrokerConfig
@@ -155,10 +155,10 @@ func (b *MinioServiceBroker) Unbind(ctx context.Context, instanceID, bindingID s
 		"binding-id":  bindingID,
 		"instance-id": instanceID,
 	})
-	for _, repo := range b.InstanceBinders {
-		instanceExists, _ := repo.Exists(instanceID)
+	for _, instanceBinder := range b.InstanceBinders {
+		instanceExists, _ := instanceBinder.Exists(instanceID)
 		if instanceExists {
-			err := repo.Unbind(instanceID, bindingID)
+			err := instanceBinder.Unbind(instanceID, bindingID)
 			if err != nil {
 				return brokerapi.ErrBindingDoesNotExist
 			}

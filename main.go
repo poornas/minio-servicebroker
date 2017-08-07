@@ -6,6 +6,9 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/lager"
+	"github.com/minio/minio-servicebroker/cmd/instancebinders"
+	"github.com/minio/minio-servicebroker/cmd/instancecreators"
+	"github.com/minio/minio-servicebroker/utils"
 	"github.com/pivotal-cf/brokerapi"
 )
 
@@ -26,6 +29,17 @@ const (
 	DefaultServiceID = "966fa3f8-c666-461e-acfe-bfae50bb46ad"
 )
 
+// this is just a stub - #TODO load any config from file
+func getConfig() (conf utils.Config) {
+	conf = utils.Config{
+		Endpoint:  "play.minio.io:9000",
+		AccessKey: "minio",
+		SecretKey: "minio123",
+		Secure:    true,
+	}
+	return
+}
+
 func main() {
 	// Create logger
 	log := lager.NewLogger("minio-servicebroker")
@@ -45,6 +59,8 @@ func main() {
 		Username: username,
 		Password: password,
 	}
+	// Load endpoint config
+	conf := getConfig()
 
 	// Setup the broker
 	broker := &MinioServiceBroker{
@@ -56,6 +72,8 @@ func main() {
 		planName:           DefaultPlanName,
 		planDescription:    DefaultPlanDescription,
 		bindablePlan:       true,
+		instanceBinders:    instancebinders.New(conf, log),
+		instanceCreators:   instancecreators.New(conf, log),
 	}
 
 	brokerAPI := brokerapi.New(broker, log, credentials)
