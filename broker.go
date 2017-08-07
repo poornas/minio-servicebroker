@@ -13,6 +13,9 @@ type Credentials struct {
 	EndpointURL string
 	AccessKey   string
 	SecretKey   string
+	// for now -- this is the credentials
+	instanceID string
+	bindingID  string
 }
 
 type BrokerConfig struct {
@@ -117,6 +120,7 @@ func (b *MinioServiceBroker) Deprovision(ctx context.Context, instanceID string,
 	spec := brokerapi.DeprovisionServiceSpec{}
 	fmt.Println("servieid=", instanceID)
 	fmt.Println("instancemager instances==", b.instanceMgr.instances)
+	// TODO: Need to ensure no binding exists - bindingInfo needs to change to have instanceID as state
 	exists, _ := b.instanceMgr.Exists(instanceID)
 	if exists {
 		return spec, b.instanceMgr.Destroy(instanceID)
@@ -133,21 +137,18 @@ func (b *MinioServiceBroker) Bind(ctx context.Context, instanceID, bindingID str
 		"instance-id": instanceID,
 	})
 	binding := brokerapi.Binding{}
-
-	exists, _ := b.binderMgr.Exists(instanceID, bindingID)
+	exists, _ := b.instanceMgr.Exists(instanceID)
 	if exists {
+		bindingExists, _ := b.binderMgr.Exists(instanceID, bindingID)
+		if bindingExists {
+			return brokerapi.Binding{}, brokerapi.ErrBindingAlreadyExists
+		}
 		instanceCredentials, err := b.binderMgr.Bind(instanceID, bindingID)
 		if err != nil {
-			return binding, err
+			return brokerapi.Binding{}, errors.New("binding could not be created")
 		}
-		// credentialsMap := map[string]interface{}{
-		// 	"EndpointURL": instanceCredentials.EndpointURL,
-		// 	"AccessKey":   instanceCredentials.AccessKey,
-		// 	"SecretKey":   instanceCredentials.SecretKey,
-		// }
-
 		binding.Credentials = instanceCredentials
-		return binding, nil
+		return binding, err
 	}
 
 	return brokerapi.Binding{}, brokerapi.ErrInstanceDoesNotExist
