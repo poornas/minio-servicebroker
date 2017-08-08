@@ -144,6 +144,7 @@ func (b *MinioServiceBroker) Bind(ctx context.Context, instanceID, bindingID str
 			return brokerapi.Binding{}, brokerapi.ErrBindingAlreadyExists
 		}
 		instanceCredentials, err := b.binderMgr.Bind(instanceID, bindingID)
+
 		if err != nil {
 			return brokerapi.Binding{}, errors.New("binding could not be created")
 		}

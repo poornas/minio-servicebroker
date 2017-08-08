@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.cloudfoundry.org/lager"
+	"github.com/minio/minio-servicebroker/client"
 	"github.com/minio/minio-servicebroker/utils"
 	"github.com/pivotal-cf/brokerapi"
 )
@@ -11,6 +12,7 @@ type InstanceMgr struct {
 	logger    lager.Logger
 	conf      utils.Config
 	instances map[string]*InstanceInfo
+	client    *client.ApiClient
 }
 
 // InstanceInfo holds instance state
@@ -20,11 +22,16 @@ type InstanceInfo struct {
 }
 
 // NewInstanceMgr manages running instances
-func NewInstanceMgr(config utils.Config, logger lager.Logger) (m *InstanceMgr) {
+func NewInstanceMgr(config utils.Config, logger lager.Logger) *InstanceMgr {
+	c, err := client.New(config, logger)
+	if err != nil {
+		return nil
+	}
 	return &InstanceMgr{
 		logger:    logger,
 		conf:      config,
 		instances: make(map[string]*InstanceInfo, 10),
+		client:    c,
 	}
 }
 
@@ -40,7 +47,15 @@ func (mgr *InstanceMgr) getInstanceByID(instanceID string) *InstanceInfo {
 // Create creates an instance
 func (mgr *InstanceMgr) Create(instanceID string) error {
 	//TODO create instance here
-	mgr.instances[instanceID] = &InstanceInfo{instanceID: instanceID} //hold reference to provisioned instance state
+	settings := map[string]string{
+		"instanceID": instanceID,
+	}
+	instance, err := mgr.client.CreateInstance(settings)
+	if err != nil {
+		return err
+	}
+	mgr.instances[instanceID] = &InstanceInfo{instanceID: instance} //hold reference to provisioned instance state
+
 	return nil
 }
 
@@ -49,6 +64,10 @@ func (mgr *InstanceMgr) Destroy(instanceID string) error {
 	found, _ := mgr.Exists(instanceID)
 	if found {
 		delete(mgr.instances, instanceID)
+		err := mgr.client.DeleteInstance(instanceID)
+		if err != nil {
+			return err
+		}
 	}
 	return brokerapi.ErrInstanceDoesNotExist
 }
