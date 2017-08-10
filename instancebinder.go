@@ -2,9 +2,9 @@ package main
 
 import (
 	"code.cloudfoundry.org/lager"
-	"github.com/minio/minio-servicebroker/client"
-	"github.com/minio/minio-servicebroker/utils"
 	"github.com/pivotal-cf/brokerapi"
+	"github.com/poornas/minio-servicebroker/client"
+	"github.com/poornas/minio-servicebroker/utils"
 )
 
 // BinderMgr holds info about the InstanceBinders

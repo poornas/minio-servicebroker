@@ -1,0 +1,10 @@
+---
+applications:
+- name: minio-sb1
+  path: ./
+  buildpack: binary_buildpack
+  enable_global_access_to_plans: true
+  needs_cf_credentials: true
+  env:
+    SECURITY_USER_NAME: miniobroker
+    SECURITY_USER_PASSWORD: miniobroker123

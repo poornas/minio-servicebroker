@@ -85,13 +85,15 @@ func (b *MinioServiceBroker) Services(ctx context.Context) []brokerapi.Service {
 //Provision ...
 func (b *MinioServiceBroker) Provision(ctx context.Context, instanceID string, serviceDetails brokerapi.ProvisionDetails, asyncAllowed bool) (spec brokerapi.ProvisionedServiceSpec, err error) {
 	b.log.Info("Provisioning new instance ...")
+	fmt.Println("instanceID=%s, planID=%s", serviceDetails.ServiceID, serviceDetails.PlanID)
+	fmt.Println("DEFAULTS serviceid=%s, planid=%s", b.serviceID, b.planID)
 	spec = brokerapi.ProvisionedServiceSpec{IsAsync: false}
 	exists, err := b.instanceMgr.Exists(instanceID)
 	if exists {
 		return spec, errors.New("Instance already exists")
 	}
 	if serviceDetails.ServiceID != b.serviceID {
-		return spec, fmt.Errorf("Service %s does not exist", serviceDetails.ServiceID)
+		return spec, fmt.Errorf("Service %s does not exist.Should be %s", serviceDetails.ServiceID, b.serviceID)
 	}
 
 	if serviceDetails.PlanID == "" {
@@ -106,6 +108,7 @@ func (b *MinioServiceBroker) Provision(ctx context.Context, instanceID string, s
 	if instance != nil {
 		return spec, errors.New("instance already provisioned") // should return 409 here.
 	}
+	fmt.Println("about to go to create bucket...")
 	err = b.instanceMgr.Create(instanceID)
 	if err != nil {
 		return brokerapi.ProvisionedServiceSpec{}, err
@@ -131,7 +134,6 @@ func (b *MinioServiceBroker) Deprovision(ctx context.Context, instanceID string,
 
 // Bind Api
 func (b *MinioServiceBroker) Bind(ctx context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
-
 	b.log.Debug("Binding service...", lager.Data{
 		"binding-id":  bindingID,
 		"instance-id": instanceID,

@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
 	"code.cloudfoundry.org/lager"
 
-	"github.com/minio/minio-servicebroker/utils"
 	"github.com/pivotal-cf/brokerapi"
+	"github.com/poornas/minio-servicebroker/utils"
 )
 
 const (
@@ -26,7 +25,7 @@ const (
 	DefaultPlanDescription = "Secure access to a single instance Minio server"
 
 	// DefaultServiceID is placeholder id for the service broker
-	DefaultServiceID = "966fa3f8-c666-461e-acfe-bfae50bb46ad"
+	DefaultServiceID = "minio-broker-id"
 )
 
 // this is just a stub - #TODO load any config from file
@@ -47,13 +46,13 @@ func main() {
 	log.RegisterSink(lager.NewWriterSink(os.Stderr, lager.INFO))
 
 	// Ensure username and password are present
-	username := os.Getenv("USER_NAME")
+	username := os.Getenv("SECURITY_USER_NAME")
 	if username == "" {
-		log.Fatal("missing USER_NAME", nil)
+		username = "miniobroker"
 	}
-	password := os.Getenv("USER_PASSWORD")
+	password := os.Getenv("SECURITY_USER_PASSWORD")
 	if password == "" {
-		log.Fatal("missing USER_PASSWORD", nil)
+		password = "miniobroker123"
 	}
 	credentials := brokerapi.BrokerCredentials{
 		Username: username,
@@ -76,11 +75,14 @@ func main() {
 		binderMgr:          NewBinderMgr(conf, log),
 		instanceMgr:        NewInstanceMgr(conf, log),
 	}
-
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	brokerAPI := brokerapi.New(broker, log, credentials)
 	http.Handle("/", brokerAPI)
 	log.Info("Listening for requests")
-	err := http.ListenAndServe(fmt.Sprintf(":%d", 8080), nil)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Error("Failed to start the server", err)
 	}
